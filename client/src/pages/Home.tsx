@@ -159,7 +159,7 @@ export default function Home() {
               socketStatus === 'disconnected' && (
                 <div className='flex flex-col gap-6 items-start w-full'>
                   <button 
-                    className={`${locationStatus === 'accessed' ? 'bg-purple-800' : 'bg-gray-600 cursor-not-allowed'} text-md text-white font-bold py-2 px-4 rounded-md`}
+                    className={`${locationStatus === 'accessed' ? 'bg-gray-800' : 'bg-gray-600 cursor-not-allowed'} text-md text-white font-bold py-2 px-4 rounded-md`}
                     onClick={() => {
                       if(locationStatus === 'accessed') {
                         connectToSocketServer()
