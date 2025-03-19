@@ -1,3 +1,4 @@
+// client/src/components/Elements/StatusPanel/index.tsx
 
 type Props = {
   title: string

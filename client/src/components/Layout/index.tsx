@@ -1,3 +1,5 @@
+// client/src/components/Layout/index.tsx
+
 import { Outlet } from 'react-router-dom'
 import Header from '../Elements/Header'
 

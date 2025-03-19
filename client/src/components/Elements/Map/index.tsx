@@ -1,3 +1,5 @@
+// client/src/components/Elements/Map/index.tsx
+
 import {useState, useEffect} from 'react'
 import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaflet'
 import { GeolocationPosition } from '../../../types'
@@ -44,8 +46,7 @@ function Map({location}: {location: GeolocationPosition}) {
     <div className='w-full bg-gray-100 h-[600px] md:h-[550px]'>
       <MapContainer center = {[location.lat, location.lng]} zoom={30} scrollWheelZoom={true} className='h-screen' >
         <TileLayer
-          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-        />
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"        />
         <LocationMarker location={location}/>
       </MapContainer>
     </div>

@@ -1,3 +1,5 @@
+// client/src/pages/Home.tsx
+
 import {useState, useEffect} from 'react'
 import {useSocket} from '../context/socket'
 import { toast } from 'react-toastify'
@@ -32,6 +34,7 @@ export default function Home() {
   useEffect(() => {
     let watchId: number | null = null
     if('geolocation' in navigator) {
+      // here is where we get the user position
       watchId = navigator.geolocation.watchPosition((position) => {
       setPosition({
         lat: position.coords.latitude,

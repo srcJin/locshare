@@ -1,3 +1,5 @@
+// client/src/components/Elements/Status/index.tsx
+
 import {MdOutlineLocationOn, MdOutlineLocationOff} from 'react-icons/md'
 import {LuServerOff, LuServer} from 'react-icons/lu'
 import { LocationStatus, SocketStatus } from '../../../types'

@@ -1,3 +1,5 @@
+// server/src/index.ts
+
 import express, { Express, Request, Response } from 'express'
 import {Socket, Server} from 'socket.io'
 import cors from 'cors'
