@@ -30,6 +30,36 @@ function createUserIcon(nickname: string): L.DivIcon {
 //     shadowUrl: iconShadow
 // })
 
+
+// Create a custom icon for static locations that displays the name
+function createStaticLocationIcon(name: string): L.DivIcon {
+  return L.divIcon({
+    html: `
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="background-color: blue; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>
+        <div style="font-size: 12px; color: black; white-space: nowrap;">${name}</div>
+      </div>
+    `,
+    className: "", // clear default styles
+    iconSize: [20, 30],
+    iconAnchor: [10, 15],
+    popupAnchor: [0, -15],
+  });
+}
+
+
+
+const staticLocations = [
+  { name: "McKinley Elementary School", lat: 42.344531, lng: -71.073132 },
+  { name: "Josiah Quincy Elementary School", lat: 42.347956, lng: -71.064741 },
+  { name: "Wonderland", lat: 42.413693, lng: -70.991668 },
+  { name: "Nazzaro Community Center", lat: 42.365258, lng: -71.054373 },
+  { name: "BCYF Martin Pino Community Center", lat: 42.388889, lng: -71.010833  },
+  { name: "Paris Street Community Center", lat: 42.372796, lng: -71.037466 },
+  { name: "Mario Umana Academy K-8", lat: 42.378179, lng: -71.040175 },
+  { name: "Chelsea Public Library", lat: 42.393639, lng: -71.032174 },
+]
+
 type LocationMarkerProps = {
   location: GeolocationPosition;
   nickname?: string;
@@ -83,6 +113,13 @@ function Map({ location, history, nickname = "User" }: MapProps) {
         {history && history.length > 0 && (
           <Polyline positions={history} />
         )}
+
+    {staticLocations.map((loc, idx) => (
+      <Marker key={idx} position={[loc.lat, loc.lng]} icon={createStaticLocationIcon(loc.name)}>
+        <Popup>{loc.name}</Popup>
+      </Marker>
+    ))}
+
       </MapContainer>
     </div>
   )
