@@ -1,13 +1,46 @@
 {
-  "aani2": [
+  "btk1i": [
     {
-      "userId": "5bms0p7hrLewM5PBAAAB",
-      "nickname": "5bms0p7hrLewM5PBAAAB",
+      "room_id": "btk1i",
+      "user_id": "TcfFMGOqZUnrQZsTAAAD",
+      "nickname": "Jin2",
       "position": {
-        "lat": 42.36212669437494,
-        "lng": -71.09716275750071
+        "lat": 42.36213360045978,
+        "lng": -71.09718836877411
       },
-      "timestamp": "2025-03-20T01:25:24.848Z"
+      "timestamp": "2025-03-20T02:07:32.960Z"
+    }
+  ],
+  "risff": [
+    {
+      "room_id": "risff",
+      "user_id": "LtR-SVXQoFCFW4JjAAAH",
+      "nickname": "Jin2",
+      "position": {
+        "lat": 42.36213360045978,
+        "lng": -71.09718836877411
+      },
+      "timestamp": "2025-03-20T02:07:57.278Z"
+    },
+    {
+      "room_id": "risff",
+      "user_id": "LtR-SVXQoFCFW4JjAAAH",
+      "nickname": "Jin2",
+      "position": {
+        "lat": 42.36213360045978,
+        "lng": -71.09718836877411
+      },
+      "timestamp": "2025-03-20T02:08:01.962Z"
+    },
+    {
+      "room_id": "risff",
+      "user_id": "LtR-SVXQoFCFW4JjAAAH",
+      "nickname": "Jin2",
+      "position": {
+        "lat": 42.36213360045978,
+        "lng": -71.09718836877411
+      },
+      "timestamp": "2025-03-20T02:08:16.475Z"
     }
   ]
 }

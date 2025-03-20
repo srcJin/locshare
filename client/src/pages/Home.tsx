@@ -89,6 +89,7 @@ export default function Home() {
         setSocketStatus("connected");
         socket.emit("createRoom", {
           position,
+          nickname
         });
       });
 
