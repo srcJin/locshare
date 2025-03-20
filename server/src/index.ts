@@ -33,6 +33,7 @@ const io: Server = new Server(server, {
 // Define a custom interface extending the Socket interface
 interface CustomSocket extends Socket {
   roomId?: string
+  nickname?: string
 }
 
 const roomCreator = new Map<string, string>() // roomid => socketid
@@ -46,6 +47,10 @@ io.on('connection', (socket: CustomSocket) => {
   socket.on('createRoom', (data) => {
     const roomId = Math.random().toString(36).substring(2, 7)
     socket.join(roomId)
+
+    // Save the nickname provided from the client (fallback to socket.id)
+    socket.nickname = data.nickname || socket.id;
+
     const totalRoomUsers = io.sockets.adapter.rooms.get(roomId)
 
     // Initialize history for the room
@@ -55,18 +60,20 @@ io.on('connection', (socket: CustomSocket) => {
       roomId,
       position: data.position,
       totalConnectedUsers: Array.from(totalRoomUsers || []),
+      nickname: socket.nickname,
     })
     roomCreator.set(roomId, socket.id)
     socket.roomId = roomId //  attach roomId to socket
   })
 
-  socket.on('joinRoom', (data: {roomId: string}) => {
+  socket.on('joinRoom', (data: {roomId: string; nickname?: string}) => {
 
     // check if room exists
     const roomExists = io.sockets.adapter.rooms.has(data.roomId)
     if (roomExists) {
       socket.join(data.roomId)
       socket.roomId = data.roomId //  attach roomId to socket
+      socket.nickname = data.nickname || socket.id;
 
       // Notify the room creator about the new user     
       const creatorSocketID = roomCreator.get(data.roomId)
@@ -76,6 +83,7 @@ io.on('connection', (socket: CustomSocket) => {
           const totalRoomUsers = io.sockets.adapter.rooms.get(data.roomId)
           creatorSocket.emit('userJoinedRoom', {
             userId: socket.id,
+            nickname: socket.nickname,
             totalConnectedUsers: Array.from(totalRoomUsers || [])
           })
         }
@@ -83,6 +91,7 @@ io.on('connection', (socket: CustomSocket) => {
       // msg to joiner
       io.to(`${socket.id}`).emit('roomJoined', {
         status: 'OK',
+        nickname: socket.nickname
       })
 
     } else {
@@ -103,6 +112,7 @@ io.on('connection', (socket: CustomSocket) => {
       // Create an update record with a timestamp
       const update = {
         userId: socket.id,
+        nickname: socket.nickname,
         position: data.position,
         timestamp: new Date().toISOString()
       };

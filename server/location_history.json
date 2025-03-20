@@ -58,6 +58,38 @@
         "lng": -71.09717889106798
       },
       "timestamp": "2025-03-20T00:20:24.382Z"
+    },
+    {
+      "userId": "qnkkXVb8wEdCxRAKAAAG",
+      "position": {
+        "lat": 42.36212523451642,
+        "lng": -71.09719126343451
+      },
+      "timestamp": "2025-03-20T00:25:25.020Z"
+    },
+    {
+      "userId": "qnkkXVb8wEdCxRAKAAAG",
+      "position": {
+        "lat": 42.36211885394684,
+        "lng": -71.09715559675844
+      },
+      "timestamp": "2025-03-20T00:30:25.818Z"
+    },
+    {
+      "userId": "qnkkXVb8wEdCxRAKAAAG",
+      "position": {
+        "lat": 42.3621129435803,
+        "lng": -71.09718590581643
+      },
+      "timestamp": "2025-03-20T00:35:26.549Z"
+    },
+    {
+      "userId": "qnkkXVb8wEdCxRAKAAAG",
+      "position": {
+        "lat": 42.36218601533988,
+        "lng": -71.09716200476507
+      },
+      "timestamp": "2025-03-20T00:40:27.145Z"
     }
   ]
 }
