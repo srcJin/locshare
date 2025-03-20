@@ -5,6 +5,8 @@ import {Socket, Server} from 'socket.io'
 import cors from 'cors'
 import dotenv from 'dotenv'
 
+import fs from 'fs'
+
 dotenv.config()
 
 const app: Express = express()
@@ -35,6 +37,9 @@ interface CustomSocket extends Socket {
 
 const roomCreator = new Map<string, string>() // roomid => socketid
 
+// This object will store the history for each room:
+let locationHistory: Record<string, any[]> = {};
+
 io.on('connection', (socket: CustomSocket) => {
   console.log(`User connected: ${socket.id}`)
 
@@ -42,6 +47,10 @@ io.on('connection', (socket: CustomSocket) => {
     const roomId = Math.random().toString(36).substring(2, 7)
     socket.join(roomId)
     const totalRoomUsers = io.sockets.adapter.rooms.get(roomId)
+
+    // Initialize history for the room
+    locationHistory[roomId] = [];
+
     socket.emit('roomCreated', { 
       roomId,
       position: data.position,
@@ -83,10 +92,38 @@ io.on('connection', (socket: CustomSocket) => {
     }
   })
   
+  // socket.on('updateLocation', (data) => {
+  //   io.emit('updateLocationResponse', data)
+  // })
+
+  // Record Every Location Update and Write to File
   socket.on('updateLocation', (data) => {
-    io.emit('updateLocationResponse', data)
+    const roomId = socket.roomId;
+    if(roomId) {
+      // Create an update record with a timestamp
+      const update = {
+        userId: socket.id,
+        position: data.position,
+        timestamp: new Date().toISOString()
+      };
+      // Append the update to the room's history
+      locationHistory[roomId].push(update);
+  
+      // Write the whole history object to a JSON file (async)
+      fs.writeFile('location_history.json', JSON.stringify(locationHistory, null, 2), (err) => {
+        if(err) console.error("Error writing location history:", err);
+      });
+      
+      // Instead of broadcasting to everyone, you might choose to emit only to the room:
+      io.to(roomId).emit('updateLocationResponse', data);
+    }
   })
- 
+
+  socket.on('getLocationHistory', (data: { roomId: string }) => {
+    const history = locationHistory[data.roomId] || [];
+    socket.emit('locationHistory', { history });
+  });
+
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`)
 

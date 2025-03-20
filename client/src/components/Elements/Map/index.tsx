@@ -1,7 +1,7 @@
 // client/src/components/Elements/Map/index.tsx
 
 import {useState, useEffect} from 'react'
-import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, useMapEvents, Marker, Popup,  Polyline } from 'react-leaflet'
 import { GeolocationPosition } from '../../../types'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -38,16 +38,18 @@ function LocationMarker({location}: {location: GeolocationPosition}) {
 }
 
 
-function Map({location}: {location: GeolocationPosition}) {
+function Map({location, history}: {location: GeolocationPosition, history?: {lat: number, lng: number}[]}) {
 
   if(!location) return 'No location found'
 
   return (
     <div className='w-full bg-gray-100 h-[600px] md:h-[550px]'>
-      <MapContainer center = {[location.lat, location.lng]} zoom={30} scrollWheelZoom={true} className='h-screen' >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"        />
-        <LocationMarker location={location}/>
+      <MapContainer center={[location.lat, location.lng]} zoom={30} scrollWheelZoom={true} className='h-screen'>
+        <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+        <LocationMarker location={location} />
+        {history && history.length > 0 && (
+          <Polyline positions={history} />
+        )}
       </MapContainer>
     </div>
   )
