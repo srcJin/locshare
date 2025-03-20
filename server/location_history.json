@@ -1,95 +1,13 @@
 {
-  "aiuk0": [],
-  "yioxe": [
+  "aani2": [
     {
-      "userId": "WgYME95RGYcAwAwpAAAE",
+      "userId": "5bms0p7hrLewM5PBAAAB",
+      "nickname": "5bms0p7hrLewM5PBAAAB",
       "position": {
-        "lat": 42.36212068368985,
-        "lng": -71.09718136509677
+        "lat": 42.36212669437494,
+        "lng": -71.09716275750071
       },
-      "timestamp": "2025-03-20T00:18:27.769Z"
-    },
-    {
-      "userId": "WgYME95RGYcAwAwpAAAE",
-      "position": {
-        "lat": 42.36212068368985,
-        "lng": -71.09718136509677
-      },
-      "timestamp": "2025-03-20T00:18:27.776Z"
-    },
-    {
-      "userId": "WgYME95RGYcAwAwpAAAE",
-      "position": {
-        "lat": 42.36212068368985,
-        "lng": -71.09718136509677
-      },
-      "timestamp": "2025-03-20T00:18:27.779Z"
-    },
-    {
-      "userId": "WgYME95RGYcAwAwpAAAE",
-      "position": {
-        "lat": 42.36212068368985,
-        "lng": -71.09718136509677
-      },
-      "timestamp": "2025-03-20T00:18:32.384Z"
-    },
-    {
-      "userId": "WgYME95RGYcAwAwpAAAE",
-      "position": {
-        "lat": 42.36212068368985,
-        "lng": -71.09718136509677
-      },
-      "timestamp": "2025-03-20T00:18:32.390Z"
-    },
-    {
-      "userId": "WgYME95RGYcAwAwpAAAE",
-      "position": {
-        "lat": 42.36212068368985,
-        "lng": -71.09718136509677
-      },
-      "timestamp": "2025-03-20T00:18:32.391Z"
-    }
-  ],
-  "3l0rx": [
-    {
-      "userId": "qnkkXVb8wEdCxRAKAAAG",
-      "position": {
-        "lat": 42.36218130226288,
-        "lng": -71.09717889106798
-      },
-      "timestamp": "2025-03-20T00:20:24.382Z"
-    },
-    {
-      "userId": "qnkkXVb8wEdCxRAKAAAG",
-      "position": {
-        "lat": 42.36212523451642,
-        "lng": -71.09719126343451
-      },
-      "timestamp": "2025-03-20T00:25:25.020Z"
-    },
-    {
-      "userId": "qnkkXVb8wEdCxRAKAAAG",
-      "position": {
-        "lat": 42.36211885394684,
-        "lng": -71.09715559675844
-      },
-      "timestamp": "2025-03-20T00:30:25.818Z"
-    },
-    {
-      "userId": "qnkkXVb8wEdCxRAKAAAG",
-      "position": {
-        "lat": 42.3621129435803,
-        "lng": -71.09718590581643
-      },
-      "timestamp": "2025-03-20T00:35:26.549Z"
-    },
-    {
-      "userId": "qnkkXVb8wEdCxRAKAAAG",
-      "position": {
-        "lat": 42.36218601533988,
-        "lng": -71.09716200476507
-      },
-      "timestamp": "2025-03-20T00:40:27.145Z"
+      "timestamp": "2025-03-20T01:25:24.848Z"
     }
   ]
 }

@@ -28,8 +28,8 @@ export default function Home() {
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
   const [roomLink, setRoomLink] = useState<string>("");
   const [locationHistory, setLocationHistory] = useState<
-  { lat: number; lng: number }[]
->([]);
+  { lat: number; lng: number }[]>([]);
+  const [nickname, setNickname] = useState<string>("");
 
   function connectToSocketServer() {
     connectSocket();
@@ -211,6 +211,13 @@ export default function Home() {
                   Share Location
                 </button>
                 <span className="flex gap-1">
+                <input
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    placeholder="Enter your nickname"
+                    className="bg-gray-300 rounded-md px-4 py-2 outline-none text-md font-medium"
+                  />
                   <input
                     type="text"
                     value={roomLink}
@@ -274,7 +281,7 @@ export default function Home() {
                   >
                     Show Location History
                   </button>
-                  
+
                 </div>
 
                 <div className="flex p-2 bg-yellow-400 rounded-md">
@@ -312,7 +319,7 @@ export default function Home() {
         </article>
         {position && (
           <article className="bg-gray-200 rounded-md overflow-hidden w-full">
-            <Map location={position} history={locationHistory} />
+            <Map location={position} history={locationHistory} nickname={nickname}/>
           </article>
         )}
       </section>
