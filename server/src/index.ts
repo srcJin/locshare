@@ -25,8 +25,9 @@ const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+
 const server = app.listen(port, () => {
-  console.log(`Server is running`);
+  console.log(`Server is running on port ${port}`);
 });
 
 const io: Server = new Server(server, {
@@ -47,142 +48,159 @@ const roomCreator = new Map<string, string>(); // roomid => socketid
 let locationHistory: Record<string, any[]> = {};
 
 io.on("connection", (socket: CustomSocket) => {
-  console.log(`User connected: ${socket.id}`);
+  console.log(`User connected: ${socket.id}, nickname: ${socket.nickname}`);
 
-  socket.on("createRoom", async (data) => {
-    const roomId = Math.random().toString(36).substring(2, 7);
-    socket.join(roomId);
+  socket.on("joinRoom", async (data: { roomId: string; nickname?: string; position?: any }) => {
+    const { roomId } = data;
+    const nickname = data.nickname || socket.id;
 
-    // Save the nickname provided from the client (fallback to socket.id)
-    socket.nickname = data.nickname || socket.id;
+    // Check if that room already exists
+    const roomExists = io.sockets.adapter.rooms.has(roomId);
 
-    const totalRoomUsers = io.sockets.adapter.rooms.get(roomId);
+    if (!roomExists) {
+      // 1) CREATE A NEW ROOM
+      socket.join(roomId);
+      socket.roomId = roomId;
+      socket.nickname = nickname;
 
-    // Initialize history for the room
-    locationHistory[roomId] = [];
+      // Mark this user as the creator
+      roomCreator.set(roomId, socket.id);
 
-    // Record initial location if provided
-    if (data.position) {
-      const initialUpdate = {
-        room_id: roomId,
-        user_id: socket.id,
-        nickname: socket.nickname,
-        position: data.position,
-        timestamp: new Date().toISOString(),
-      };
+      // Initialize empty location history for this room
+      locationHistory[roomId] = [];
 
-      // Append the initial update to the room's history
-      locationHistory[roomId].push(initialUpdate);
-
-      // Write the updated history to a JSON file (async)
-      fs.writeFile(
-        "location_history.json",
-        JSON.stringify(locationHistory, null, 2),
-        (err) => {
-          if (err) {
-            console.error("Error writing location history:", err);
-          }
-        }
-      );
-
-      // Insert the initial record into the Supabase database
-      const { data: supabaseData, error } = await supabase
-        .from("url_evacuation_location_history")
-        .insert([initialUpdate]);
-
-      if (error) {
-        console.error("Error inserting initial location update:", error);
-      } else {
-        console.debug(
-          "[createRoom] Successfully inserted initial location update:");
+      // If they have an initial position, record that
+      if (data.position) {
+        await recordLocationUpdate(roomId, socket, data.position);
       }
-    }
 
-    // Emit the room creation event back to the client
-    socket.emit("roomCreated", {
-      roomId,
-      position: data.position,
-      totalConnectedUsers: Array.from(totalRoomUsers || []),
-      nickname: socket.nickname,
-    });
-    roomCreator.set(roomId, socket.id);
-    socket.roomId = roomId; // attach roomId to socket
-  });
-
-  socket.on("joinRoom", (data: { roomId: string; nickname?: string }) => {
-    // check if room exists
-    const roomExists = io.sockets.adapter.rooms.has(data.roomId);
-    if (roomExists) {
-      socket.join(data.roomId);
-      socket.roomId = data.roomId; //  attach roomId to socket
-      socket.nickname = data.nickname || socket.id;
-
-      // Notify the room creator about the new user
-      const creatorSocketID = roomCreator.get(data.roomId);
-      if (creatorSocketID) {
-        const creatorSocket = io.sockets.sockets.get(creatorSocketID); // get socket instance of creator
-        if (creatorSocket) {
-          const totalRoomUsers = io.sockets.adapter.rooms.get(data.roomId);
-          creatorSocket.emit("userJoinedRoom", {
-            userId: socket.id,
-            nickname: socket.nickname,
-            totalConnectedUsers: Array.from(totalRoomUsers || []),
-          });
-        }
-      }
-      // msg to joiner
-      io.to(`${socket.id}`).emit("roomJoined", {
+      console.log(`[joinRoom] Created new room '${roomId}' with creator ${socket.id} nickname '${socket.nickname}`);
+      io.to(socket.id).emit("roomJoined", {
         status: "OK",
         nickname: socket.nickname,
+        roomId: roomId,
       });
     } else {
-      io.to(`${socket.id}`).emit("roomJoined", {
-        status: "ERROR",
+      // 2) ROOM ALREADY EXISTS --> JOIN
+      socket.join(roomId);
+      socket.roomId = roomId;
+      socket.nickname = nickname;
+
+      console.log(`[joinRoom] '${socket.id}' nickname '${socket.nickname}' joined existing room '${roomId}'`);
+
+      // Let the creator know that a new user joined (if it’s truly a new user)
+      const creatorSocketID = roomCreator.get(roomId);
+      if (creatorSocketID && creatorSocketID !== socket.id) {
+        const totalRoomUsers = io.sockets.adapter.rooms.get(roomId);
+        io.to(creatorSocketID).emit("userJoinedRoom", {
+          userId: socket.id,
+          nickname: socket.nickname,
+          totalConnectedUsers: Array.from(totalRoomUsers || []),
+        });
+      }
+
+      // If user wants to “continue” and had a prior location, that’s up to how you store sessions.
+      // For simplicity, we do nothing special. They’re just joined again.
+
+      // Notify that the join was successful
+      io.to(socket.id).emit("roomJoined", {
+        status: "OK",
+        nickname: socket.nickname,
+        roomId: roomId,
       });
     }
   });
 
-  // socket.on('updateLocation', (data) => {
-  //   io.emit('updateLocationResponse', data)
-  // })
-
-  // Record Every Location Update and Write to File
+  /**
+   * Whenever a user’s location changes, record it in memory and in DB, then broadcast to the room.
+   */
   socket.on("updateLocation", async (data) => {
     const roomId = socket.roomId;
+    if (!roomId) return;
+
+    console.debug("[updateLocation]", `User ${socket.id} => roomId: ${roomId}`, data);
+
+    await recordLocationUpdate(roomId, socket, data.position);
+
+    // Broadcast the new location to all members of the same room
+    io.to(roomId).emit("updateLocationResponse", data);
+  });
+
+  /**
+   * If the front-end requests a location history, we pull from in-memory object.
+   * In production, you might load from the DB instead.
+   */
+  socket.on("getLocationHistory", (data: { roomId: string }) => {
+    const history = locationHistory[data.roomId] || [];
+    socket.emit("locationHistory", { history });
+  });
+
+  /**
+   * On disconnect, check if this user was the “creator” for the room. If so, destroy the room.
+   */
+  socket.on("disconnect", () => {
+    console.log(`room: ${socket.roomId} User disconnected: ${socket.id},  nickname: ${socket.nickname}`);
+
+    const roomId = socket.roomId;
     if (roomId) {
-      console.debug("[updateLocation] Received data:", data, "for roomId:", roomId);
-
-      // Create an update record with a timestamp
-      const update = {
-        room_id: roomId,
-        user_id: socket.id,
-        nickname: socket.nickname,
-        position: data.position,
-        timestamp: new Date().toISOString(),
-      };
-      // Append the update to the room's history
-      locationHistory[roomId].push(update);
-
-      // Write the whole history object to a JSON file (async)
-      fs.writeFile(
-        "location_history.json",
-        JSON.stringify(locationHistory, null, 2),
-        (err) => {
-          if (err) console.error("Error writing location history:", err);
+      // If disconnected user is the room creator, destroy the room for everyone
+      if (roomCreator.get(roomId) === socket.id) {
+        // notify users in the room that the room is destroyed
+        const roomUsers = io.sockets.adapter.rooms.get(roomId);
+        if (roomUsers) {
+          for (const socketId of roomUsers) {
+            io.to(socketId).emit("roomDestroyed", { status: "OK" });
+          }
         }
-      );
+        // forcibly remove the room from the adapter
+        io.sockets.adapter.rooms.delete(roomId);
+        // remove from the roomCreator map
+        roomCreator.delete(roomId);
+      } else {
+        // Just a normal user leaving the room
+        socket.leave(roomId);
 
-      // // Insert the record into the Supabase database
-      // const { error } = await supabase
-      //   // define the table name
-      //   .from('url_evacuation_location_history')
-      //   .insert([update])
+        // Let the creator know a user left
+        const creatorSocketId = roomCreator.get(roomId);
+        if (creatorSocketId) {
+          const creatorSocket = io.sockets.sockets.get(creatorSocketId);
+          if (creatorSocket) {
+            const totalConnectedUsers = io.sockets.adapter.rooms.get(roomId);
+            creatorSocket.emit("userLeftRoom", {
+              userId: socket.id,
+              totalConnectedUsers: Array.from(totalConnectedUsers || []),
+            });
+          }
+        }
+      }
+    }
+  });
 
-      // if (error) {
-      //   console.error("Error inserting location update:", error)
-      // }
+  // A helper function to record an incoming location update in memory + DB + JSON file
+  async function recordLocationUpdate(roomId: string, socket: CustomSocket, position: any) {
+    if (!position) return;
 
-      // Insert the record into the Supabase database
+    // Build the location update object
+    const update = {
+      room_id: roomId,
+      user_id: socket.id,
+      nickname: socket.nickname || socket.id,
+      position,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Add it to in-memory array
+    locationHistory[roomId].push(update);
+
+    // Also write the entire locationHistory object to disk (for demo)
+    fs.writeFile("location_history.json", JSON.stringify(locationHistory, null, 2), (err) => {
+      if (err) {
+        console.error("Error writing location history:", err);
+      }
+    });
+
+    // Insert into Supabase DB
+    try {
       const { data: supabaseData, error } = await supabase
         .from("url_evacuation_location_history")
         .insert([update]);
@@ -190,59 +208,10 @@ io.on("connection", (socket: CustomSocket) => {
       if (error) {
         console.error("Error inserting location update:", error);
       } else {
-        // Debug: Log successful insertion details
-        console.debug(
-          "[updateLocation] Successfully inserted update:",
-          supabaseData
-        );
+        console.debug("[recordLocationUpdate] Inserted record:", supabaseData);
       }
-
-      // Instead of broadcasting to everyone, you might choose to emit only to the room:
-      io.to(roomId).emit("updateLocationResponse", data);
+    } catch (err) {
+      console.error("[recordLocationUpdate] Supabase insert error:", err);
     }
-  });
-
-  socket.on("getLocationHistory", (data: { roomId: string }) => {
-    const history = locationHistory[data.roomId] || [];
-
-    // now we use in memory history for demo purpose
-    socket.emit("locationHistory", { history });
-  });
-
-  socket.on("disconnect", () => {
-    console.log(`User disconnected: ${socket.id}`);
-
-    const roomId = socket.roomId;
-    if (roomId) {
-      // if disconnected user is creator, destroy room
-      if (roomCreator.get(roomId) === socket.id) {
-        // notify users in room that room is destroyed
-        const roomUsers = io.sockets.adapter.rooms.get(roomId);
-        if (roomUsers) {
-          for (const socketId of roomUsers) {
-            io.to(`${socketId}`).emit("roomDestroyed", {
-              status: "OK",
-            });
-          }
-        }
-        io.sockets.adapter.rooms.delete(roomId);
-        roomCreator.delete(roomId);
-      } else {
-        socket.leave(roomId);
-        // notify creator that user left room
-        const creatorSocketId = roomCreator.get(roomId);
-        if (creatorSocketId) {
-          const creatorSocket = io.sockets.sockets.get(creatorSocketId);
-          if (creatorSocket) {
-            creatorSocket.emit("userLeftRoom", {
-              userId: socket.id,
-              totalConnectedUsers: Array.from(
-                io.sockets.adapter.rooms.get(roomId) || []
-              ),
-            });
-          }
-        }
-      }
-    }
-  });
+  }
 });
